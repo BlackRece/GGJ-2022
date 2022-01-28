@@ -4,26 +4,21 @@ namespace GGJ2022
 {
     public interface ICreature { }
     
-    [RequireComponent(typeof(IInputHandler), typeof(IMotionHandler))]
-    public class Player : MonoBehaviour, ICreature {
+    [RequireComponent(typeof(IInputHandler))]
+    public sealed class Player : MonoBehaviour, ICreature {
+        [SerializeField] private CreatureSettings _settings = default;
+
         private IInputHandler _inputHandler = default;
         private IMotionHandler _motionHandler = default;
 
         private void Awake() {
             _inputHandler = GetComponent<IInputHandler>();
-            _motionHandler = GetComponent<IMotionHandler>();
+            _motionHandler = new MotionHandler(transform, _settings.MotionSpeed);
         }
 
-        // Start is called before the first frame update
-        void Start()
+        private void Update()
         {
-        
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-        
+            _motionHandler.DoMovement(_inputHandler.Movement);
         }
     }
 

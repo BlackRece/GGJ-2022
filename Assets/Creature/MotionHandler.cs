@@ -2,21 +2,28 @@ using UnityEngine;
 
 namespace GGJ2022
 {
-    public interface IMotionHandler { }
+    public interface IMotionHandler {
+        void DoMovement(Vector2 directionVector);
+    }
     
-    public sealed class MotionHandler : MonoBehaviour, IMotionHandler
+    public sealed class MotionHandler : IMotionHandler
     {
-        // Start is called before the first frame update
-        void Start()
-        {
-        
+        private readonly float _motionSpeed;
+        private readonly Transform _transform;
+
+        public MotionHandler(Transform transform, float motionSpeed) {
+            _transform = transform;
+            _motionSpeed = motionSpeed;
         }
 
-        // Update is called once per frame
-        void Update()
-        {
-        
+        public void DoMovement(Vector2 directionVector) {
+            var step = Time.deltaTime * _motionSpeed;
+            
+            _transform.Translate(
+                directionVector.x * step,
+                0,
+                directionVector.y *  step
+            );
         }
     }
-
 }
