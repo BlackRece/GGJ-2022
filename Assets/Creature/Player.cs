@@ -14,14 +14,16 @@ namespace GGJ2022
 
         private void Awake() {
             _inputHandler = GetComponent<IInputHandler>();
-            _motionHandler = new MotionHandler(transform, _settings.MotionSpeed);
+            _motionHandler = new MotionHandler(transform, _settings.MotionSpeed, _settings.RotateSpeed);
             
             _shieldHandler = GetComponent<IShieldHandler>();
         }
 
         private void Update()
         {
-            _motionHandler.DoMovement(_inputHandler.Movement);
+            _motionHandler.Move(_inputHandler.Forward);
+            _motionHandler.Turn(_inputHandler.Rotation);
+            //_motionHandler.DoMovement(_inputHandler.Movement);
 
             _shieldHandler.ActivateShield(_inputHandler.IsMoving);
         }

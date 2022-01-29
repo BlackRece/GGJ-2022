@@ -9,5 +9,8 @@ namespace GGJ2022 {
     public sealed class CreatureSettings : ScriptableObject, ICreatureSettings {
         [SerializeField] private float _motionSpeed = 1f;
         public float MotionSpeed => _motionSpeed;
+
+        [SerializeField] private float _rotateSpeed = 10f;
+        public float RotateSpeed => _rotateSpeed; 
     }
 }

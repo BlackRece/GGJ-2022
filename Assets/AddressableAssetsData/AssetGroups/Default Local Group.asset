@@ -29,6 +29,18 @@ MonoBehaviour:
     m_SerializedLabels: []
     m_MainAsset: {fileID: 0}
     m_TargetAsset: {fileID: 0}
+  - m_GUID: 234c8433a2e606a46a6da47ffe76a089
+    m_Address: Assets/Creature/ShieldMaterial.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    m_MainAsset: {fileID: 0}
+    m_TargetAsset: {fileID: 0}
+  - m_GUID: b8a12c60ce879674d83b8ce920c99edd
+    m_Address: Assets/Creature/Player.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    m_MainAsset: {fileID: 0}
+    m_TargetAsset: {fileID: 0}
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 7dec60357e09a7d4d9bfd2d4f4f6db07, type: 2}
   m_SchemaSet:
