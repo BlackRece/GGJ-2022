@@ -3,7 +3,6 @@ using UnityEngine;
 namespace GGJ2022
 {
     public interface IMotionHandler {
-        void DoMovement(Vector2 directionVector);
         void Move(float forward);
         void Turn(float rotation);
     }
@@ -21,21 +20,10 @@ namespace GGJ2022
             _rotateSpeed = rotateSpeed;
         }
 
-        public void DoMovement(Vector2 directionVector) {
-            var step = Time.deltaTime * _motionSpeed;
-            
-            _transform.Translate(
-                directionVector.x * step,
-                0,
-                directionVector.y *  step
-            );
-        }
-
         public void Move(float forward) {
-            var step = Time.deltaTime * _motionSpeed;
+            var step = Time.deltaTime * _motionSpeed * forward;
 
-            _transform.rotation.ToAngleAxis(out var angle, out var axis);
-            _transform.Translate(_transform.forward * (forward * step), Space.World);
+            _transform.Translate(_transform.forward * step, Space.World);
         }
 
         public void Turn(float rotation) {

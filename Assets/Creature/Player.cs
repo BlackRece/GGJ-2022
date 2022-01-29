@@ -23,9 +23,8 @@ namespace GGJ2022
         {
             _motionHandler.Move(_inputHandler.Forward);
             _motionHandler.Turn(_inputHandler.Rotation);
-            //_motionHandler.DoMovement(_inputHandler.Movement);
 
-            _shieldHandler.ActivateShield(_inputHandler.IsMoving);
+            _shieldHandler.RequestShield(_inputHandler.IsMoving);
         }
     }
 
