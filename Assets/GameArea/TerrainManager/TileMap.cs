@@ -3,21 +3,6 @@
 using UnityEngine;
 
 namespace GGJ2022 {
-    public class Limit {
-        private readonly int _min;
-        private readonly int _max;
-
-        public Limit(int min, int max) {
-            _min = min;
-            _max = max;
-        }
-        public int Fix(int value) {
-            if (value > _max) return _max;
-            if (value < _min) return _min;
-            return value;
-        }
-    }
-    
     public sealed class TileMap : ScriptableObject {
         [SerializeField] private int PATH_WIDTH = 3;
         [SerializeField] private int MAX_PATH_LENGTH = 10;
@@ -117,9 +102,6 @@ namespace GGJ2022 {
 
             return path;
         }
-
-        //private void CreatePath(Vector2Int pos, Vector2Int size) =>
-        //    CreateArea(pos, size);
         
         private void CreateArea(Vector2Int position, Vector2Int size) {
             var halfSize = GetRoomCenter(size);
@@ -163,72 +145,6 @@ namespace GGJ2022 {
             tileGO.transform.position = tile.GetWorldPosition(mapPosition);
             _tilemap.Add(mapPosition, tile);
         }
-
-        private void GenerateTileAt(int x, int y) {
-            var tilePrefab = IoC.Resolve<ITile>();
-
-            var mapPosition = new Vector2Int(x, y);
-            
-            //need to ensure rooms don't overlap...
-            if (_tilemap.ContainsKey(mapPosition))
-                return;
-            
-            var tileGO = Instantiate(tilePrefab.GetGameObject, _parentTransform);
-            var tile = tileGO.GetComponent<ITile>();
-            
-            tileGO.transform.position = tile.GetWorldPosition(mapPosition);
-            _tilemap.Add(mapPosition, tile);
-        }
     }
 
-    public sealed class RoomDimension {
-        private const int MAX_ROOM_SIZE = 20;
-        private const int MIN_ROOM_SIZE = 5;
-        
-        private Vector2Int _center;
-        public Vector2Int Center {
-            get {
-                if (_center == default) 
-                    _center = GetCenter();
-
-                return _center;
-            }
-        }
-            
-        private Vector2Int _size;
-        public Vector2Int Size {
-            get => _size;
-            private set {
-                var limiter = new Limit(MIN_ROOM_SIZE, MAX_ROOM_SIZE);
-                _size = new Vector2Int(
-                    limiter.Fix(value.x),
-                    limiter.Fix(value.y)
-                );
-            }
-        }
-
-        public RoomDimension() => 
-            _size = default;
-        public RoomDimension(int width, int length) => 
-            _size = new Vector2Int(width, length);
-        public RoomDimension(Vector2Int dimension) => 
-            _size = dimension;
-
-        public static RoomDimension Randomise() =>
-            new RoomDimension(
-                Random.Range(MIN_ROOM_SIZE, MAX_ROOM_SIZE),
-                Random.Range(MIN_ROOM_SIZE, MAX_ROOM_SIZE));
-
-        private Vector2Int GetCenter() {
-            var result = _size / 2;
-            
-            if (_size.x % 2 != 0) 
-                result.x++;
-
-            if (_size.y % 2 != 0)
-                result.y++;
-
-            return result;
-        }
-    }
 }
