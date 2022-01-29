@@ -35,7 +35,7 @@ namespace GGJ2022
             var step = Time.deltaTime * _motionSpeed;
 
             _transform.rotation.ToAngleAxis(out var angle, out var axis);
-            _transform.Translate(_transform.forward * (forward * step));
+            _transform.Translate(_transform.forward * (forward * step), Space.World);
         }
 
         public void Turn(float rotation) {
