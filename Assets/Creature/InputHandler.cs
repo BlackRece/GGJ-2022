@@ -5,6 +5,7 @@ namespace GGJ2022
     public interface IInputHandler {
         Vector2 Movement { get; }
         bool IsShooting { get; }
+        bool IsMoving { get; }
     }
 
     public class InputHandler : MonoBehaviour, IInputHandler {
@@ -20,6 +21,8 @@ namespace GGJ2022
             Input.GetAxisRaw(InputKeyWords.HORIZONTAL),
             Input.GetAxisRaw(InputKeyWords.VERTICAL)
         );
+
+        public bool IsMoving => Movement != Vector2.zero;
 
         public bool IsShooting => Input.GetButtonDown(InputKeyWords.SHOOT);
     }

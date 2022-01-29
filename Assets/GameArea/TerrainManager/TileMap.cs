@@ -45,60 +45,77 @@ namespace GGJ2022 {
             
             //start location
             var currentPos = new Vector2Int();
-            var nextPos = new Vector2Int();
             var nextRoom = new RoomDimension(startingRoomSize);
 
+            Vector2Int path;
+            int pathLength;
+            
             while (roomCounter < MAX_TILE_GROUPS) {
                 //room
                 CreateArea(currentPos, nextRoom.Size);
                 
-                //get path size for next location
-                var nextPath = new Vector2Int(PATH_WIDTH, PATH_WIDTH);
-                var nextPathLength = Random.Range(0, MAX_PATH_LENGTH) + 1;
+                //get path length for next location
+                pathLength = Random.Range(0, MAX_PATH_LENGTH) + 1;
                 
-                //choose direction and move to room's wall
-                var direction = (Wall)Random.Range(0, 5);
-
-                int distance;
-                switch (direction) {
-                    case Wall.North:
-                        distance = (nextPathLength / 2 + nextRoom.Center.y);
-                        currentPos.y -= distance;
-                        nextPos = new Vector2Int(currentPos.x, currentPos.y - distance);
-                        nextPath.y = nextPathLength;
-                        break;
-                    case Wall.South:
-                        distance = (nextPathLength / 2 + nextRoom.Center.y);
-                        currentPos.y += distance;
-                        nextPos = new Vector2Int(currentPos.x, currentPos.y + distance);
-                        nextPath.y = nextPathLength;
-                        break;
-                    case Wall.East:
-                        distance = (nextPathLength / 2 + nextRoom.Center.x);
-                        currentPos.x += distance;
-                        nextPos = new Vector2Int(currentPos.x - distance, currentPos.y);
-                        nextPath.x = nextPathLength;
-                        break;
-                    case Wall.West:
-                        distance = (nextPathLength / 2 + nextRoom.Center.x);
-                        currentPos.x -= distance;
-                        nextPos = new Vector2Int(currentPos.x + distance, currentPos.y);
-                        nextPath.x = nextPathLength;
-                        break;
-                }
+                //choose direction
+                var direction = (Wall)Random.Range(1, 4);
                 
-                //path
-                CreateArea(currentPos, nextPath);
+                //move to room's wall
+                currentPos += CalcNextAreaCenter(direction, pathLength, nextRoom);
                 
-                Debug.Break();
+                //set path area
+                path = CalcPathSize(direction, pathLength);
                 
-                //next position
-                currentPos = nextPos;
+                //generate path
+                CreateArea(currentPos, path);
+                
+                //set room area
+                nextRoom = RoomDimension.Randomise();
+                
+                //move to next room's center
+                currentPos += CalcNextAreaCenter(direction, pathLength, nextRoom);
                 
                 //increment counter
                 roomCounter++;
-                nextRoom = new RoomDimension(startingRoomSize);
             }
+        }
+
+        private Vector2Int CalcNextAreaCenter(Wall direction, int pathLength, RoomDimension room) {
+            var distance = new Vector2Int();
+            
+            switch (direction) {
+                case Wall.North:
+                    distance.y -= (pathLength / 2 + room.Center.y);
+                    break;
+                case Wall.South:
+                    distance.y += (pathLength / 2 + room.Center.y);
+                    break;
+                case Wall.East:
+                    distance.x += (pathLength / 2 + room.Center.x);
+                    break;
+                case Wall.West:
+                    distance.x -= (pathLength / 2 + room.Center.x);
+                    break;
+            }
+
+            return distance;
+        }
+
+        private Vector2Int CalcPathSize(Wall direction, int pathSize) {
+            var path = new Vector2Int(PATH_WIDTH, PATH_WIDTH);
+            
+            switch (direction) {
+                case Wall.North:
+                case Wall.South:
+                    path.y += pathSize;
+                    break;
+                case Wall.East:
+                case Wall.West:
+                    path.x += pathSize;
+                    break;
+            }
+
+            return path;
         }
 
         //private void CreatePath(Vector2Int pos, Vector2Int size) =>
@@ -106,7 +123,7 @@ namespace GGJ2022 {
         
         private void CreateArea(Vector2Int position, Vector2Int size) {
             var halfSize = GetRoomCenter(size);
-            var container = new GameObject($"{position.x}-{position.y}");
+            var container = new GameObject($"{position.x} : {position.y}");
             container.transform.SetParent(_parentTransform);
             
             for (var x = 0; x < size.x; x++) {

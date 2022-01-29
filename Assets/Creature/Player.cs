@@ -10,15 +10,20 @@ namespace GGJ2022
 
         private IInputHandler _inputHandler = default;
         private IMotionHandler _motionHandler = default;
+        private IShieldHandler _shieldHandler = default;
 
         private void Awake() {
             _inputHandler = GetComponent<IInputHandler>();
             _motionHandler = new MotionHandler(transform, _settings.MotionSpeed);
+            
+            _shieldHandler = GetComponent<IShieldHandler>();
         }
 
         private void Update()
         {
             _motionHandler.DoMovement(_inputHandler.Movement);
+
+            _shieldHandler.ActivateShield(_inputHandler.IsMoving);
         }
     }
 
