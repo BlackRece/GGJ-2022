@@ -6,10 +6,18 @@ namespace GGJ2022 {
         [Header("Tile Prefab: ")] [SerializeField]
         private GameObject _tilePrefab = null;
         
+        [Header("Wall Prefab: ")] [SerializeField]
+        private GameObject _wallPrefab = null;
+        
+        [Header("Obstacle Prefab: ")] [SerializeField]
+        private GameObject _obstaclePrefab = null;
+        
         private void OnEnable() {
             IoC.Initialise(new DependencyManager());
 
             IoC.Register<ITile>(_tilePrefab);
+            IoC.Register<IWall>(_wallPrefab);
+            IoC.Register<IObstacle>(_obstaclePrefab);
             // IoC.Register<IEnemy>(_enemyPrefab);
             // IoC.Register<IBullet>(_bulletPrefab);
             // IoC.Register<ILocation>(_destinationPrefab);
@@ -17,4 +25,5 @@ namespace GGJ2022 {
             // IoC.Register<ITower>(_towerPrefab);
         }
     }
+
 }
