@@ -1,8 +1,20 @@
+using System;
+
 using UnityEngine;
 
 namespace GGJ2022
 {
+    [RequireComponent(typeof(GameSettings), typeof(IDungeonMap))]
     public class GlobalGameObjects : MonoBehaviour {
-        public GameSettings _settings = null;
+        [SerializeField] private GameSettings _settings = null;
+        [SerializeField] private DungeonMap _dungeonMap = null;
+
+        private void Awake() {
+            _dungeonMap.Init(transform);
+        }
+
+        private void Start() {
+            _dungeonMap.CreateDungeon(_settings.StartingRoomSize);
+        }
     }
 }

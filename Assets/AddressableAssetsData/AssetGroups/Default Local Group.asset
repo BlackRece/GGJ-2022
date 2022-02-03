@@ -41,6 +41,12 @@ MonoBehaviour:
     m_SerializedLabels: []
     m_MainAsset: {fileID: 0}
     m_TargetAsset: {fileID: 0}
+  - m_GUID: 885961155676f744fbb22522536860ff
+    m_Address: Assets/GameArea/TerrainManager/DungeonMap.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    m_MainAsset: {fileID: 0}
+    m_TargetAsset: {fileID: 0}
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 7dec60357e09a7d4d9bfd2d4f4f6db07, type: 2}
   m_SchemaSet:

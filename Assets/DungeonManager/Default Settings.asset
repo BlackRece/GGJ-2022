@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed23f2c338f246d4ad159dd9712c4f58, type: 3}
+  m_Name: Default Settings
+  m_EditorClassIdentifier: 
+  _tilePrefab: {fileID: 1139339710205134247, guid: c980e2b3d88196b4f9fcfbe6ad7aec5c, type: 3}
+  _wallPrefab: {fileID: 9009042962775603440, guid: 0ec51c5205440454a82049a8c7d15995, type: 3}
+  _obstaclePrefab: {fileID: 3246107528973220942, guid: 280348da78901c3458f6bc5040df19e8, type: 3}
