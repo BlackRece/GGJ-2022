@@ -154,6 +154,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _settings: {fileID: 11400000, guid: d471ce7b7bf6c5745a0cbeefa49ee0d9, type: 2}
   _dungeonMap: {fileID: 11400000, guid: 885961155676f744fbb22522536860ff, type: 2}
+  _creatureManager: {fileID: 11400000, guid: 3d1ea1d18dcc606408acbc0a1d41f385, type: 2}
 --- !u!4 &55750307
 Transform:
   m_ObjectHideFlags: 0

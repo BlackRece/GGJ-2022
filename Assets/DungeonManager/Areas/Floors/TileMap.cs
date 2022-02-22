@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 using UnityEngine;
 
@@ -10,8 +11,13 @@ namespace GGJ2022 {
         void Init(Transform parentTransform, IntSize size);
         void CreateTiles(Vector2Int position);
 
-        public List<ITile> TileList { get; }
+        List<ITile> TileList { get; }
         Dictionary<Vector2Int, ITile> Tiles { get; }
+        ITile GetRandomTile();
+        
+        bool IsVisited { get; }
+        void FlagAsVisited();
+        void SetParentArea(IArea parentArea);
     }
     
     public sealed class TileMap : ScriptableObject, ITileMap {
@@ -19,7 +25,6 @@ namespace GGJ2022 {
         private string _name;
         
         private Dictionary<Vector2Int, ITile> _tiles;
-
         public Dictionary<Vector2Int, ITile> Tiles => _tiles;
         public List<ITile> TileList => new List<ITile>(_tiles.Values);
 
@@ -30,6 +35,10 @@ namespace GGJ2022 {
         
         private GameObject _tileContainer;
         public GameObject TileContainer => _tileContainer;
+        
+        private bool _isVisited;
+        private IArea _parentArea;
+        public bool IsVisited => _isVisited;
 
         public void Init(Transform parent, IntSize size) {
             _parent = parent;
@@ -40,6 +49,7 @@ namespace GGJ2022 {
             _tileContainer.transform.SetParent(_parent);
             
             _tiles = new Dictionary<Vector2Int, ITile>();
+            _isVisited = false;
         }
         
         private void OnEnable() {
@@ -79,20 +89,39 @@ namespace GGJ2022 {
             
             var generateTile = tileGO.GetComponent<ITile>();
             tileGO.transform.position = generateTile.GetWorldPosition(mapPosition);
+            generateTile.SetParent(this);
 
             return generateTile;
         }
 
-        public List<ITile> GetEdgeTiles() {
-            var edgeTiles = new List<ITile>();
+        public void FlagAsVisited() {
+            if(_isVisited) 
+                return;
+            
+            _isVisited = true;
 
-            foreach (var tile in _tiles.Values) {
-                if (!tile.IsEdge) continue;
-                
-                edgeTiles.Add(tile);
+            foreach (var tilePair in _tiles) {
+                tilePair.Value.FlagAsVisited();
             }
 
-            return edgeTiles;
+            _parentArea.FlagAsVisited();
+        }
+
+        public void SetParentArea(IArea parentArea) {
+            _parentArea = parentArea;
+        }
+
+        public ITile GetRandomTile() {
+            var listOfTiles = _tiles.Values.ToList();
+
+            ITile targetTile;
+            var isEdgeTile = true;
+            do {
+                targetTile = listOfTiles[Random.Range(0, listOfTiles.Count)];
+                isEdgeTile = targetTile.IsEdge;
+            } while (isEdgeTile);
+
+            return targetTile;
         }
     }
 }

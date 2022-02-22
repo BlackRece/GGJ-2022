@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 
 using UnityEngine;
+using UnityEngine.Events;
 
 using Random = UnityEngine.Random;
 
@@ -18,6 +19,8 @@ namespace GGJ2022 {
         void CreateArea();
         void CreatePath();
         void CreateEndRoom();
+
+        IArea GetArea(Guid areaId);
     }
 
     [CreateAssetMenu(menuName = "GGJ2022/Dungeon Map")]
@@ -36,25 +39,31 @@ namespace GGJ2022 {
         [SerializeField] private IntRange PATH_LENGTH = new IntRange(3, 10);
         
         private Dictionary<Vector2Int, ITile> _tiles;
+        private List<IArea> _areas;
         private Transform _parentTransform;
         private Area.DoorToThe _direction, _lastDirection;
         private IntSize _startingRoomSize;
         private int _numberOfRooms;
-        
+
+        private Vector3 _playerSpawnPosition;
         private Vector2Int _currentPos;
         public Vector2Int Position => _currentPos;
+        
+        public event UnityAction<Vector3> TerrainComplete;
 
         private void OnEnable() {
             _tiles = new Dictionary<Vector2Int, ITile>();
+            _areas = new List<IArea>();
         }
         
         public void Init(Transform parentTransform, IntSize startingRoomSize) {
             _parentTransform = parentTransform;
             
             _startingRoomSize = startingRoomSize;
-            _numberOfRooms = 5; // ROOM_LIMIT.Random();
+            _numberOfRooms = ROOM_LIMIT.Random();
             
             _currentPos = new Vector2Int();
+            _playerSpawnPosition = new Vector3(_currentPos.x, 1f, _currentPos.y);
         }
 
         public void CreateSpawnRoom() {
@@ -66,7 +75,7 @@ namespace GGJ2022 {
             
             var room = CreateArea(roomType, areaSize, _currentPos);
                     
-            AddAreaToMap(room.TileMap);
+            AddAreaToMap(room);
 
             _currentPos += DistanceToEdge(_direction, areaSize);
         }
@@ -85,11 +94,10 @@ namespace GGJ2022 {
             
             var room = CreateArea(roomType, areaSize, _currentPos);
                     
-            AddAreaToMap(room.TileMap);
+            AddAreaToMap(room);
 
             _currentPos += DistanceToEdge(_direction, areaSize);
         }
-
 
         public void CreatePath() {
             var roomType = Area.AreaType.Path;
@@ -99,7 +107,7 @@ namespace GGJ2022 {
             
             var path = CreateArea(roomType, areaSize, _currentPos);
                     
-            AddAreaToMap(path.TileMap);
+            AddAreaToMap(path);
 
             _currentPos += DistanceToEdge(_direction, areaSize);
         }
@@ -115,7 +123,7 @@ namespace GGJ2022 {
             
             var room = CreateArea(Area.AreaType.Room, areaSize, _currentPos);
                     
-            AddAreaToMap(room.TileMap);
+            AddAreaToMap(room);
         }
 
         public void CreateQuickDungeon() {
@@ -130,6 +138,8 @@ namespace GGJ2022 {
             CreatePath();
             
             CreateEndRoom();
+
+            TerrainComplete?.Invoke(_playerSpawnPosition);
         }
         
         public void CreateDungeon() {
@@ -161,7 +171,7 @@ namespace GGJ2022 {
                 
                 var room = CreateArea(roomType, areasize, _currentPos);
                     
-                AddAreaToMap(room.TileMap);
+                AddAreaToMap(room);
 
                 _currentPos += DistanceToEdge(_direction, areasize);
                 
@@ -176,8 +186,6 @@ namespace GGJ2022 {
             Area.AreaType roomType;
             
             if (roomCounter == 0)
-                roomType = Area.AreaType.Spawn;
-            else if (roomCounter >= MAX_TILE_GROUPS - 1)
                 roomType = Area.AreaType.Spawn;
             else if (roomCounter % 2 == 0) 
                 roomType = Area.AreaType.Room;
@@ -224,55 +232,15 @@ namespace GGJ2022 {
             };
         }
 
-        private void AddAreaToMap(ITileMap tileMap) {
-            foreach (var areaTile in tileMap.Tiles) {
+        private void AddAreaToMap(IArea area) {
+            _areas.Add(area);
+            
+            foreach (var areaTile in area.TileMap.Tiles) {
                 if(_tiles.ContainsKey(areaTile.Key))
                     continue;
                 
                 _tiles.Add(areaTile.Key, areaTile.Value);
             }
-        }
-
-        private bool IsOverlappingAnotherArea(Vector2Int position, IntSize size) {
-            /*
-            if (size == IntSize.zero)
-                return true;
-
-            var isOverlappingAnotherArea = false;
-
-            var testArea = CreateRect(position, size); 
-            
-            foreach (var areaPair in _tiles) {
-                var storedArea = CreateRect(areaPair.Key, areaPair.Value.Size);
-                
-                if (testArea.Overlaps(storedArea)) {
-                    isOverlappingAnotherArea = true;
-                    break;
-                }
-            }
-
-            return isOverlappingAnotherArea;
-            */
-            
-            for (var x = position.x - size.Center().x; x < position.x + size.Center().x; x++) {
-                for (var y = position.y - size.Center().y; y < position.y + size.Center().y; y++) {
-                    var storedTile = new Vector2Int(x, y);
-                    if (_tiles.ContainsKey(storedTile) && _tiles[storedTile] != null)
-                        return true;
-                }
-            }
-            
-            return false;
-        }
-
-        private RectInt CreateRect(Vector2Int position, Vector2Int size) {
-            var mid = AreaHelper.FindMiddle(size);
-            var result = new RectInt(Vector2Int.zero, size);
-            result.position = new Vector2Int(
-                position.x - mid.x,
-                position.y - mid.y
-            );
-            return result;
         }
 
         public Vector2Int DistanceToEdge(Area.DoorToThe edge, IntSize size) {
@@ -298,5 +266,12 @@ namespace GGJ2022 {
             return result;
         }
 
+        public IArea GetArea(Guid areaId) {
+            foreach (var area in _areas) {
+                if (area.Id == areaId) return area;
+            }
+
+            return null;
+        }
     }
 }

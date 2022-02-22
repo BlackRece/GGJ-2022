@@ -1,13 +1,20 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace GGJ2022 {
     public interface IArea {
+        Guid Id { get; }
+        
         IntSize Size { get; }
         Vector2Int Center { get; }
         void SetPosition(Vector2Int pos);
-        ITileMap TileMap { get; } 
+        ITileMap TileMap { get; }
+        void FlagAsVisited();
+
+        ITile GetRandomTile();
     }
 
     public sealed class Area : IArea {
@@ -39,7 +46,10 @@ namespace GGJ2022 {
         private readonly IntSize _size;
         public IntSize Size => _size;
 
-        private readonly Vector2Int _position;  
+        private readonly Vector2Int _position;
+
+        private Guid _id;
+        public Guid Id => _id;
         
         private string _name;
         private GameObject _container;
@@ -51,24 +61,20 @@ namespace GGJ2022 {
         private IWallMap _wallMap;
         public IWallMap WallMap => _wallMap;
 
+        private bool _isVisited;
+
+        public static UnityEvent<IArea> AreaVisitedHendler;
+        
         public Area(AreaDetail detail) {
             _type = detail.Type;
             _size = detail.Size;
             _position = detail.Position;
 
             CreateContainer(detail.Parent);
-        }
-
-        public Area(AreaType type, Vector2Int size, Transform parent, ITileMap tileMap, IWallMap wallMap) {
-            _type = type;
-            _size = new IntSize(size.x, size.y);
-
-            CreateContainer(parent);
             
-            _tileMap = tileMap;
-            _wallMap = wallMap;
+            _isVisited = false;
         }
-        
+
         private void CreateContainer(Transform parent) {
             _name = $"{_type.ToString()} ({_size.Width} : {_size.Height})";
             _container = new GameObject(_name);
@@ -79,12 +85,12 @@ namespace GGJ2022 {
             _tileMap = IoC.Resolve<ITileMap>();
             _tileMap.Init(_container.transform, _size);
             _tileMap.CreateTiles(_position);
+            _tileMap.SetParentArea(this);
         }
 
         public void CreateWalls() {
             if (_tileMap == null) return;
-            var tileList = _tileMap.Tiles.Values;
-            
+
             _wallMap = IoC.Resolve<IWallMap>();
             _wallMap.Init(_container.transform);
             _wallMap.CreateWalls(_tileMap.TileList);
@@ -105,8 +111,23 @@ namespace GGJ2022 {
             _rect.x += Mathf.FloorToInt(mid.x);
             _rect.y += Mathf.FloorToInt(mid.y);
             
-            //_tileMap?.SetPosition(pos);
             _wallMap?.SetPosition(pos);
         }
+        
+        public void FlagAsVisited() {
+            if(_isVisited)
+                return;
+            
+            _isVisited = true;
+
+            //launch event to spawn enemies
+            var randomTile = _tileMap.GetRandomTile();
+            var tileGO = randomTile.GetGameObject;
+            //CreatureManager.SpawnCreatureOnTile(randomTile.GetTopPosition());
+            //AreaVisitedHendler?.Invoke(this);
+            CreatureManager.SpawnCreatureHandler.Invoke(this);
+        }
+
+        public ITile GetRandomTile() => _tileMap.GetRandomTile();
     }
 }

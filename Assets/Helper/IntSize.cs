@@ -28,5 +28,8 @@ namespace GGJ2022 {
             new Vector2Int(
                 _width == 0 ? 0 : (int) Mathf.Floor((float) _width / 2),
                 _height == 0 ? 0 : (int) Mathf.Floor((float) _height / 2));
+
+        public Vector3 CenterToVector3() =>
+            new Vector3(Center().x, 0, Center().y);
     }
 }
