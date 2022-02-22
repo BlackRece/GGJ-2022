@@ -1,5 +1,3 @@
-using System;
-
 using UnityEngine;
 
 namespace GGJ2022
@@ -10,11 +8,13 @@ namespace GGJ2022
         [SerializeField] private DungeonMap _dungeonMap = null;
 
         private void Awake() {
-            _dungeonMap.Init(transform);
+            _dungeonMap.Init(transform, _settings.StartingRoomSize);
         }
 
         private void Start() {
-            _dungeonMap.CreateDungeon(_settings.StartingRoomSize);
+            //_dungeonMap.CreateDungeon();
+            //_dungeonMap.CreateSpawnRoom();
+            _dungeonMap.CreateQuickDungeon();
         }
     }
 }

@@ -178,8 +178,9 @@ namespace GGJ2022 {
             }
             
             var middleDoor = Mathf.FloorToInt((float) walls.Count / 2);
+            var halfDoorWidth = Mathf.FloorToInt((float) Area.PATH_WIDTH / 2);
             
-            for (var i = middleDoor-1; i <= Area.PATH_WIDTH; i++) 
+            for (var i = middleDoor - halfDoorWidth; i <= middleDoor + halfDoorWidth; i++) 
                 wallsInDoorWay.Add(walls[i]);
             
             return wallsInDoorWay;

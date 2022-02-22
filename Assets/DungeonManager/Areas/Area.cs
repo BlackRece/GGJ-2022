@@ -4,8 +4,10 @@ using UnityEngine;
 
 namespace GGJ2022 {
     public interface IArea {
-        Vector2Int Size { get; }
+        IntSize Size { get; }
+        Vector2Int Center { get; }
         void SetPosition(Vector2Int pos);
+        ITileMap TileMap { get; } 
     }
 
     public sealed class Area : IArea {
@@ -26,13 +28,19 @@ namespace GGJ2022 {
 
         private RectInt _rect;
         public RectInt RectSize => _rect;
+        public Vector2Int Center => new Vector2Int (
+            Mathf.FloorToInt(_rect.center.x), 
+            Mathf.FloorToInt(_rect.center.y)
+        );
 
         private readonly AreaType _type;
         public AreaType Type => _type;
         
-        private readonly Vector2Int _size;
-        public Vector2Int Size => _rect.size;
+        private readonly IntSize _size;
+        public IntSize Size => _size;
 
+        private readonly Vector2Int _position;  
+        
         private string _name;
         private GameObject _container;
         public GameObject Container => _container;
@@ -42,53 +50,44 @@ namespace GGJ2022 {
 
         private IWallMap _wallMap;
         public IWallMap WallMap => _wallMap;
-        
-        public Area(AreaType type, Vector2Int size, Transform parent) {
-            _type = type;
-            _size = size;
-            _rect = new RectInt(new Vector2Int(), size);
 
-            _name = $"{_type.ToString()} ({_size.x} : {_size.y})";
-            _container = new GameObject(_name);
-            _container.transform.SetParent(parent);
+        public Area(AreaDetail detail) {
+            _type = detail.Type;
+            _size = detail.Size;
+            _position = detail.Position;
+
+            CreateContainer(detail.Parent);
         }
-        
+
         public Area(AreaType type, Vector2Int size, Transform parent, ITileMap tileMap, IWallMap wallMap) {
             _type = type;
-            _size = size;
+            _size = new IntSize(size.x, size.y);
 
-            _name = $"{_type.ToString()} ({_size.x} : {_size.y})";
-            _container = new GameObject(_name);
-            _container.transform.SetParent(parent);
-
+            CreateContainer(parent);
+            
             _tileMap = tileMap;
             _wallMap = wallMap;
         }
         
-        public void SetPosition(Vector2Int pos) {
-            _container.transform.position = new Vector3(pos.x, 0, pos.y);
-
-            var mid = _rect.center;
-            
-            _rect.x += Mathf.FloorToInt(mid.x);
-            _rect.y += Mathf.FloorToInt(mid.y);
-            
-            _tileMap?.SetPosition(pos);
-            _wallMap?.SetPosition(pos);
+        private void CreateContainer(Transform parent) {
+            _name = $"{_type.ToString()} ({_size.Width} : {_size.Height})";
+            _container = new GameObject(_name);
+            _container.transform.SetParent(parent);
         }
-
+        
         public void CreateFloor() {
             _tileMap = IoC.Resolve<ITileMap>();
             _tileMap.Init(_container.transform, _size);
-            _tileMap.CreateTiles();
+            _tileMap.CreateTiles(_position);
         }
 
         public void CreateWalls() {
             if (_tileMap == null) return;
+            var tileList = _tileMap.Tiles.Values;
             
             _wallMap = IoC.Resolve<IWallMap>();
             _wallMap.Init(_container.transform);
-            _wallMap.CreateWalls(_tileMap.Tiles);
+            _wallMap.CreateWalls(_tileMap.TileList);
         }
 
         public void CreateDoorWays(List<DoorToThe> doorWays) {
@@ -97,6 +96,17 @@ namespace GGJ2022 {
             foreach (var door in doorWays)
                 _wallMap.CreateDoorWay(door);
         }
-    }
 
+        public void SetPosition(Vector2Int pos) {
+            _container.transform.position = new Vector3(pos.x, 0, pos.y);
+
+            var mid = _rect.center;
+            
+            _rect.x += Mathf.FloorToInt(mid.x);
+            _rect.y += Mathf.FloorToInt(mid.y);
+            
+            //_tileMap?.SetPosition(pos);
+            _wallMap?.SetPosition(pos);
+        }
+    }
 }

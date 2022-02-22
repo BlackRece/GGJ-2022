@@ -61,8 +61,8 @@ namespace GGJ2022 {
 
         private AreaBuilder WithFloorTiles() {
             _tileMap = IoC.Resolve<ITileMap>();
-            _tileMap.Init(_parent, _size);
-            _tileMap.CreateTiles();
+            _tileMap.Init(_parent, new IntSize(_size.x, _size.y));
+            //_tileMap.CreateTiles(TODO);
             return this;
         }
         
@@ -71,7 +71,7 @@ namespace GGJ2022 {
             
             _wallMap = IoC.Resolve<IWallMap>();
             _wallMap.Init(_parent);
-            _wallMap.CreateWalls(_tileMap.Tiles);
+            _wallMap.CreateWalls(_tileMap.TileList);
             return this;
         }
 

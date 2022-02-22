@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 using UnityEngine;
 
@@ -8,8 +7,17 @@ using Random = UnityEngine.Random;
 
 namespace GGJ2022 {
     public interface IDungeonMap {
-        void Init(Transform parentTransform);
-        void CreateDungeon(Vector2Int startingRoomSize);
+        Vector2Int Position { get; }
+        
+        void Init(Transform parentTransform, IntSize startingRoomSize);
+        
+        void CreateDungeon();
+        void CreateQuickDungeon();
+        
+        void CreateSpawnRoom();
+        void CreateArea();
+        void CreatePath();
+        void CreateEndRoom();
     }
 
     [CreateAssetMenu(menuName = "GGJ2022/Dungeon Map")]
@@ -21,126 +29,222 @@ namespace GGJ2022 {
         [SerializeField] private int MAX_ROOM_SIZE = 50;
         [SerializeField] private int MIN_ROOM_SIZE = 10;
         
-        private Dictionary<Vector2Int, IArea> _areas = default;
+        [SerializeField] private IntRange ROOM_LIMIT = new IntRange(5, 10);
+        [SerializeField] private IntRange ROOM_WIDTH = new IntRange(10, 50);
+        [SerializeField] private IntRange ROOM_HEIGHT = new IntRange(10, 50);
+        
+        [SerializeField] private IntRange PATH_LENGTH = new IntRange(3, 10);
+        
+        private Dictionary<Vector2Int, ITile> _tiles;
         private Transform _parentTransform;
         private Area.DoorToThe _direction, _lastDirection;
-        private Vector2Int _startingRoomSize;
+        private IntSize _startingRoomSize;
+        private int _numberOfRooms;
+        
+        private Vector2Int _currentPos;
+        public Vector2Int Position => _currentPos;
 
         private void OnEnable() {
-            _areas = new Dictionary<Vector2Int, IArea>();
+            _tiles = new Dictionary<Vector2Int, ITile>();
         }
         
-        public void Init(Transform parentTransform) {
+        public void Init(Transform parentTransform, IntSize startingRoomSize) {
             _parentTransform = parentTransform;
+            
+            _startingRoomSize = startingRoomSize;
+            _numberOfRooms = 5; // ROOM_LIMIT.Random();
+            
+            _currentPos = new Vector2Int();
+        }
+
+        public void CreateSpawnRoom() {
+            var roomType = Area.AreaType.Spawn;
+            var areaSize = GetAreaSize(roomType);
+            
+            _lastDirection = Area.DoorToThe.None;
+            _direction = SetRandomDirection();
+            
+            var room = CreateArea(roomType, areaSize, _currentPos);
+                    
+            AddAreaToMap(room.TileMap);
+
+            _currentPos += DistanceToEdge(_direction, areaSize);
+        }
+
+        public void CreateArea() {
+            var roomType = Area.AreaType.Room;
+            var areaSize = GetAreaSize(roomType);
+
+            _currentPos += DistanceToEdge(_direction, areaSize);
+            
+            _lastDirection = AreaHelper.GetLastDirection(_direction);
+
+            do {
+                _direction = SetRandomDirection();
+            } while (_direction == _lastDirection); 
+            
+            var room = CreateArea(roomType, areaSize, _currentPos);
+                    
+            AddAreaToMap(room.TileMap);
+
+            _currentPos += DistanceToEdge(_direction, areaSize);
+        }
+
+
+        public void CreatePath() {
+            var roomType = Area.AreaType.Path;
+            var areaSize = GetAreaSize(roomType);
+
+            _currentPos += DistanceToEdge(_direction, areaSize);
+            
+            var path = CreateArea(roomType, areaSize, _currentPos);
+                    
+            AddAreaToMap(path.TileMap);
+
+            _currentPos += DistanceToEdge(_direction, areaSize);
+        }
+
+        public void CreateEndRoom() {
+            var areaSize = GetAreaSize(Area.AreaType.Spawn);
+
+            _currentPos += DistanceToEdge(_direction, areaSize);
+            
+            _lastDirection = AreaHelper.GetLastDirection(_direction);
+
+            _direction = Area.DoorToThe.None;
+            
+            var room = CreateArea(Area.AreaType.Room, areaSize, _currentPos);
+                    
+            AddAreaToMap(room.TileMap);
+        }
+
+        public void CreateQuickDungeon() {
+            CreateSpawnRoom();
+
+            for (var i = 0; i < _numberOfRooms; i++) {
+                CreatePath();
+                
+                CreateArea();
+            }
+
+            CreatePath();
+            
+            CreateEndRoom();
         }
         
-        public void CreateDungeon(Vector2Int startingRoomSize) {
-            _startingRoomSize = startingRoomSize;
+        public void CreateDungeon() {
             var roomCounter = 0;
-            
-            //start location
-            var currentPos = new Vector2Int();
+            var areaCounter = 0;
 
             _lastDirection = Area.DoorToThe.None;
-            IArea room, path = null;
-            var roomType = Area.AreaType.Spawn;
 
-            var areasize = _startingRoomSize;
-            
-            while (roomCounter < MAX_TILE_GROUPS) {
-
-                _direction = (Area.DoorToThe) Random.Range(1, 4);
+            while (roomCounter <= _numberOfRooms) {
                 
-                var overlappingCounter = 0;
-                while (IsOverlappingAnotherArea(currentPos, areasize)) {
-                    if (overlappingCounter > 4) break;
-                    
-                    if (roomCounter == 0)
-                        roomType = Area.AreaType.Spawn;
-                    else if (roomCounter >= MAX_TILE_GROUPS - 1)
-                        roomType = Area.AreaType.Spawn;
-                    else {
-                        roomType = Area.AreaType.Room;
-                    }
+                var roomType = SetRoomType(areaCounter);
 
-                    //areasize = GetAreaSize(roomType);
-                    
-                    overlappingCounter++;
+                var areasize = GetAreaSize(
+                    roomCounter == _numberOfRooms ? Area.AreaType.Spawn : roomType
+                );
+                
+                _currentPos += DistanceToEdge(_direction, areasize);
+                
+                _lastDirection = AreaHelper.GetLastDirection(_direction);
+
+                if (roomType == Area.AreaType.Room) {
+                    do {
+                        _direction = SetRandomDirection();
+                    } while (_direction == _lastDirection);
                 }
-                if (overlappingCounter > 4) break;
-                
-                room = CreateArea(roomType, areasize);
 
-                if (room == null) break;
+                if (roomCounter == _numberOfRooms)
+                    _direction = Area.DoorToThe.None;
                 
-                room.SetPosition(currentPos);
-                _areas.Add(currentPos,room);
+                var room = CreateArea(roomType, areasize, _currentPos);
+                    
+                AddAreaToMap(room.TileMap);
 
-                _lastDirection = _direction;
-
-                roomType = Area.AreaType.Path;
-                currentPos += DistanceToEdge(_direction, areasize);
-                areasize = GetAreaSize(roomType);
+                _currentPos += DistanceToEdge(_direction, areasize);
                 
-                path = CreateArea(roomType, areasize);
-                path.SetPosition(currentPos);
-                _areas.Add(currentPos, path);
+                if(roomType == Area.AreaType.Room)
+                    roomCounter++;
 
-                _lastDirection = _direction;
-                currentPos += DistanceToEdge(_direction, areasize);
-                
-                //increment counter
-                roomCounter++;
+                areaCounter++;
             }
         }
 
-        private IArea CreateArea(Area.AreaType type, Vector2Int size) {
-            var area = new Area(type, size, _parentTransform);
-            area.CreateFloor();
+        private Area.AreaType SetRoomType(int roomCounter) {
+            Area.AreaType roomType;
             
-            if (type != Area.AreaType.Path)
+            if (roomCounter == 0)
+                roomType = Area.AreaType.Spawn;
+            else if (roomCounter >= MAX_TILE_GROUPS - 1)
+                roomType = Area.AreaType.Spawn;
+            else if (roomCounter % 2 == 0) 
+                roomType = Area.AreaType.Room;
+            else {
+                roomType = Area.AreaType.Path;
+            }
+
+            return roomType;
+        }
+
+        private Area.DoorToThe SetRandomDirection() => 
+            (Area.DoorToThe) Random.Range(1, 4);
+
+        private IArea CreateArea(Area.AreaType type, IntSize size, Vector2Int currentPos) {
+            var area = new Area(
+                new AreaDetail {
+                    Type = type,
+                    Size = size,
+                    Position = currentPos,
+                    Parent = _parentTransform
+                }
+            );
+            
+            area.CreateFloor();
+
+            if (type != Area.AreaType.Path) {
                 area.CreateWalls();
 
-            var doorWays = new List<Area.DoorToThe> {_direction};
-            if (type != Area.AreaType.Spawn)
-                doorWays.Add(_lastDirection);
-            area.CreateDoorWays(doorWays);
+                var doorWays = new List<Area.DoorToThe> {_direction};
+                if (type != Area.AreaType.Spawn)
+                    doorWays.Add(_lastDirection);
+                area.CreateDoorWays(doorWays);
+            }
 
             return area;
         }
 
-        private Vector2Int GetAreaSize(Area.AreaType type) {
-            var roomSize = AreaHelper.MakeMiddleOdd(
-                new Vector2Int(
-                    Random.Range(MIN_ROOM_SIZE, MAX_ROOM_SIZE),
-                    Random.Range(MIN_ROOM_SIZE, MAX_ROOM_SIZE))
-            );
-
-            var pathSize = AreaHelper.CalcPathSize(
-                _direction,
-                Random.Range(0, MAX_PATH_LENGTH)
-            );
-            
+        private IntSize GetAreaSize(Area.AreaType type) {
             return type switch {
                 Area.AreaType.Spawn => _startingRoomSize,
-                Area.AreaType.Path => pathSize,
-                Area.AreaType.Room => roomSize,
-                _ => new Vector2Int()
+                Area.AreaType.Path => AreaHelper.CalcPathSize(_direction, PATH_LENGTH.Random()),
+                Area.AreaType.Room => new IntSize(ROOM_WIDTH.Random(), ROOM_HEIGHT.Random()),
+                _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
             };
         }
 
-        private bool IsOverlappingAnotherArea(Vector2Int position, Vector2Int size) {
-            if (size == Vector2Int.zero)
+        private void AddAreaToMap(ITileMap tileMap) {
+            foreach (var areaTile in tileMap.Tiles) {
+                if(_tiles.ContainsKey(areaTile.Key))
+                    continue;
+                
+                _tiles.Add(areaTile.Key, areaTile.Value);
+            }
+        }
+
+        private bool IsOverlappingAnotherArea(Vector2Int position, IntSize size) {
+            /*
+            if (size == IntSize.zero)
                 return true;
 
             var isOverlappingAnotherArea = false;
+
+            var testArea = CreateRect(position, size); 
             
-            foreach (var areaPair in _areas) {
-                var storedArea = new Rect(
-                    areaPair.Key,
-                    areaPair.Value.Size
-                    );
-                var testArea = new Rect(position, size);
+            foreach (var areaPair in _tiles) {
+                var storedArea = CreateRect(areaPair.Key, areaPair.Value.Size);
+                
                 if (testArea.Overlaps(storedArea)) {
                     isOverlappingAnotherArea = true;
                     break;
@@ -148,9 +252,30 @@ namespace GGJ2022 {
             }
 
             return isOverlappingAnotherArea;
+            */
+            
+            for (var x = position.x - size.Center().x; x < position.x + size.Center().x; x++) {
+                for (var y = position.y - size.Center().y; y < position.y + size.Center().y; y++) {
+                    var storedTile = new Vector2Int(x, y);
+                    if (_tiles.ContainsKey(storedTile) && _tiles[storedTile] != null)
+                        return true;
+                }
+            }
+            
+            return false;
         }
 
-        public Vector2Int DistanceToEdge(Area.DoorToThe edge, Vector2Int size) {
+        private RectInt CreateRect(Vector2Int position, Vector2Int size) {
+            var mid = AreaHelper.FindMiddle(size);
+            var result = new RectInt(Vector2Int.zero, size);
+            result.position = new Vector2Int(
+                position.x - mid.x,
+                position.y - mid.y
+            );
+            return result;
+        }
+
+        public Vector2Int DistanceToEdge(Area.DoorToThe edge, IntSize size) {
             //this shouldn't work, right?
             var mid = AreaHelper.FindMiddle(size);
             var result = Vector2Int.zero;
@@ -172,5 +297,6 @@ namespace GGJ2022 {
 
             return result;
         }
+
     }
 }

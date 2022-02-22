@@ -12,6 +12,9 @@ namespace GGJ2022 {
             return result;
         }
 
+        public static Vector2Int FindMiddle(IntSize size) =>
+            FindMiddle(new Vector2Int(size.Width, size.Height));
+        
         public static Vector2Int FindMiddle(Vector2Int size) {
             var fixedSize = MakeMiddleOdd(size);
             return new Vector2Int(
@@ -25,9 +28,19 @@ namespace GGJ2022 {
                 Mathf.Floor((float)fixedSize.x / 2),
                 Mathf.Floor((float)fixedSize.y / 2));
         }
+        
+        public static RectInt CenterRectAt(RectInt rect, Vector2Int pos) {
+            var centeredRect = rect;
+            
+            var mid = AreaHelper.FindMiddle(rect.size);
+            centeredRect.x = pos.x + mid.x;
+            centeredRect.y = pos.y - mid.y;
 
-        public static Vector2Int CalcPathSize(Area.DoorToThe direction, int pathSize) {
-            var path = new Vector2Int(Area.PATH_WIDTH, Area.PATH_WIDTH);
+            return centeredRect;
+        }
+
+        public static IntSize CalcPathSize(Area.DoorToThe direction, int pathSize) {
+            var path = new IntSize(Area.PATH_WIDTH, Area.PATH_WIDTH);
 
             var oddPathSize = pathSize;
             if ((float) pathSize % 2 == 0) oddPathSize++;
@@ -35,15 +48,31 @@ namespace GGJ2022 {
             switch (direction) {
                 case Area.DoorToThe.North:
                 case Area.DoorToThe.South:
-                    path.y += oddPathSize;
+                    path.Height += oddPathSize;
                     break;
                 case Area.DoorToThe.East:
                 case Area.DoorToThe.West:
-                    path.x += oddPathSize;
+                    path.Width += oddPathSize;
                     break;
             }
 
             return path;
         }
+
+        public static Area.DoorToThe GetLastDirection(Area.DoorToThe direction) {
+            switch (direction) {
+                case Area.DoorToThe.North:
+                    return Area.DoorToThe.South;
+                case Area.DoorToThe.South:
+                    return Area.DoorToThe.North;
+                case Area.DoorToThe.East:
+                    return Area.DoorToThe.West;
+                case Area.DoorToThe.West:
+                    return Area.DoorToThe.East;
+            }
+
+            return Area.DoorToThe.None;
+        }
+
     }
 }

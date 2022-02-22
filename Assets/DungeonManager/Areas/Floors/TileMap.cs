@@ -4,14 +4,14 @@ using UnityEngine;
 
 namespace GGJ2022 {
     public interface ITileMap {
-        Vector2Int Size { get; }
+        IntSize Size { get; }
         GameObject TileContainer { get; }
         
-        void Init(Transform parentTransform, Vector2Int size);
-        void CreateTiles();
+        void Init(Transform parentTransform, IntSize size);
+        void CreateTiles(Vector2Int position);
 
-        public List<ITile> Tiles { get; }
-        void SetPosition(Vector2Int pos);
+        public List<ITile> TileList { get; }
+        Dictionary<Vector2Int, ITile> Tiles { get; }
     }
     
     public sealed class TileMap : ScriptableObject, ITileMap {
@@ -19,21 +19,23 @@ namespace GGJ2022 {
         private string _name;
         
         private Dictionary<Vector2Int, ITile> _tiles;
-        public List<ITile> Tiles => new List<ITile>(_tiles.Values);
+
+        public Dictionary<Vector2Int, ITile> Tiles => _tiles;
+        public List<ITile> TileList => new List<ITile>(_tiles.Values);
 
         //private Dictionary<Vector3, IObstacle> _obstacles;
         
-        private Vector2Int _size;
-        public Vector2Int Size => _size;
+        private IntSize _size;
+        public IntSize Size => _size;
         
         private GameObject _tileContainer;
         public GameObject TileContainer => _tileContainer;
 
-        public void Init(Transform parent, Vector2Int size) {
+        public void Init(Transform parent, IntSize size) {
             _parent = parent;
             _size = size;
             
-            _name = $"Floor ({size.x} : {size.y})";
+            _name = $"Floor ({size.Width} : {size.Height})";
             _tileContainer = new GameObject(_name);
             _tileContainer.transform.SetParent(_parent);
             
@@ -44,35 +46,28 @@ namespace GGJ2022 {
             _tiles = new Dictionary<Vector2Int, ITile>();
         }
 
-        public void CreateTiles() {
-            var mid = AreaHelper.FindMiddle(_size);
+        public void CreateTiles(Vector2Int position) {
+            var mid = _size.Center();
 
-            for (var x = -mid.x; x <= mid.x; x++) {
-                for (var y = -mid.y; y <= mid.y; y++) {
+            var width = new IntRange(position.x - mid.x, position.x + mid.x);
+            var height = new IntRange(position.y - mid.y, position.y + mid.y);
+            
+            for (var x = width.min; x <= width.max; x++) {
+                for (var y = height.min; y <= height.max; y++) {
                     var mapPosition = new Vector2Int(x, y);
                     var tile = GenerateTile(mapPosition);
 
-                    if (x == -mid.x) 
+                    if (x == width.min) 
                         tile.FlagAsEdge(Area.DoorToThe.West);
-                    if (x == mid.x)
+                    if (x == width.max)
                         tile.FlagAsEdge(Area.DoorToThe.East);
-                    if (y == -mid.y)
+                    if (y == height.min)
                         tile.FlagAsEdge(Area.DoorToThe.North);
-                    if (y == mid.y)
+                    if (y == height.max)
                         tile.FlagAsEdge(Area.DoorToThe.South);
 
                     _tiles.Add(mapPosition, tile);
                 }
-            }
-        }
-        
-        public void SetPosition(Vector2Int pos) {
-            var offset = new Vector3(pos.x, 0, pos.y);
-            
-            _tileContainer.transform.position = offset;
-            
-            foreach (var tile in _tiles.Values) {
-                tile.GetGameObject.transform.position += offset;
             }
         }
         

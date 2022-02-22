@@ -5,8 +5,8 @@ namespace GGJ2022 {
     public sealed class GameSettings : ScriptableObject {
         //settings
         [Header("Starting Room Size Prefab: ")] [SerializeField]
-        private Vector2Int _startingRoomSize = new Vector2Int(10, 10);
-        public Vector2Int StartingRoomSize => _startingRoomSize;
+        private IntSize _startingRoomSize = new IntSize(10, 10);
+        public IntSize StartingRoomSize => _startingRoomSize;
         
         //prefabs
         [Header("Tile Prefab: ")] [SerializeField]
